@@ -139,12 +139,14 @@ def noogu(text):
 
 	lines = lines_from(text)
 	for line in lines:
+		if prev_line_blank: print("Previous line blank")
 		line=line.strip()
 		# Sections carry over multiple lines
 		new_section = re.search(r'(.*?):$',line)
 		if new_section:
 			if prev_line_blank:
 				SECTION = new_section.group(1)
+				print("NEW SECTION")
 			else:
 				lkey = new_section.group(1)
 				lvalue = None
@@ -184,9 +186,6 @@ def noogu(text):
 			debug[KEY] = VALUE
 			inv_debug[VALUE] = KEY 
 
-			# Note if blank line
-			prev_line_blank =  line.strip()==''
-
 		# If no : (e.g., .edu domains)
 		# Need to guess what these correspond to
 		elif SECTION:
@@ -198,6 +197,10 @@ def noogu(text):
 			print('{}, {}, {}'.format(SECTION,lkey,lvalue))
 		except:
 			print(line)
+
+		# Note if blank line
+		prev_line_blank = line.strip()==''
+
 
 
 	# Process the saved buffers
