@@ -25,24 +25,29 @@ def tweak_keys(section,subsection):
 		# 'Domain Information': 'Registrant',
 
 		# .sg
-		'Administrative Contact': 'Admin',
-		'Technical Contact': 'Tech',
-		'Name Servers': 'Nameservers',
+		# 'Administrative Contact': 'admin',
+		# 'Technical Contact': 'tech',
+		# 'Name Servers': 'nameservers',
 
-		# .de
-		'Tech-C': 'Tech',
-		'Zone-C': 'Registrant',
+		# # .de
+		# 'Tech-C': 'tech',
+		# 'Zone-C': 'registrant',
 
-		# .eu
-		'Technical': 'Tech',
-		'Name servers': 'Nameservers',
+		# # .eu
+		# 'Technical': 'tech',
+		# 'Name servers': 'nameservers',
 
 		# .fr
-		'tech-c':'Tech',
-		'holder-c':'Registrant',
-		'admin-c':'Admin'
+		'tech-c':'tech',
+		'holder-c':'registrant',
+		'admin-c':'admin',
 
-		# .com
+		# # .com
+
+		# # .edu
+		# 'Administrative Contact':'admin',
+		# 'Registrant':'registrant',
+		# 'Technical Contact':'tech'
 
 	}
 
@@ -58,18 +63,42 @@ def tweak_keys(section,subsection):
 
 	# Section adjustments
 	if section == 'Domain Information':
+		# co.jp 
 		if re.search(r'Admin',subsection,re.IGNORECASE):
-			new_section = 'Admin'
+			new_section = 'admin'
 		if re.search(r'Technical',subsection,re.IGNORECASE):
-			new_section = 'Tech'
+			new_section = 'tech'
 		else:
-			new_section = 'Registrant'
+			new_section = 'registrant'
+
 	elif section in list(section_dict):
 		new_section = section_dict.get(section)
-	else:
-		new_section = section
 
-	# Key adjustments
+	elif section:
+		if re.search(r'admin',section,re.IGNORECASE):
+			new_section = 'admin'
+		elif re.search(r'tech',section,re.IGNORECASE):
+			new_section = 'tech'
+		elif re.search(r'name ?server',section,re.IGNORECASE):
+			new_section = 'nameservers'
+		elif re.search(r'registrant',section,re.IGNORECASE):
+			new_section = 'registrant'
+		elif re.search(r'registrar',section,re.IGNORECASE):
+			new_section = 'registrar'
+	else:
+		# Check subsection
+		if re.search(r'admin',subsection,re.IGNORECASE):
+			new_section = 'admin'
+		elif re.search(r'tech',subsection,re.IGNORECASE):
+			new_section = 'tech'
+		elif re.search(r'registrant',subsection,re.IGNORECASE):
+			new_section = 'registrant'
+		elif re.search(r'registrar',subsection,re.IGNORECASE):
+			new_section = 'registrar'
+		else:
+			new_section = section
+
+	# subsection adjustments
 	if re.search(r'organization|organisation|contact',subsection,re.IGNORECASE):
 		if re.search(r'type',subsection,re.IGNORECASE):
 			new_subsection = 'org_type'
@@ -96,7 +125,10 @@ def guess_buffer(lines):
 	# If University name or department name begins with a number, this will be wrong 
 	addr_begin = next((line for line in lines if re.search(r'\d',line)),None)
 	# Line before address is the organization
-	addr_idx = lines.index(addr_begin)
+	if addr_begin:
+		addr_idx = lines.index(addr_begin)
+	else:
+		addr_idx = 1
 	org = lines[addr_idx-1]
 	lines.remove(org)
 	# Anything before that is the name of the person
@@ -188,7 +220,8 @@ def noogu(text):
 
 		# If no : (e.g., .edu domains)
 		# Need to guess what these correspond to
-		elif SECTION:
+		elif SECTION!=None:
+			SECTION, _throwaway_ = tweak_keys(SECTION,'')
 			if SECTION in list(section_buffers):
 				section_buffers[SECTION].append(line.strip())
 			else:
@@ -204,7 +237,7 @@ def noogu(text):
 
 
 	# Process the saved buffers
-	print(list(section_buffers))
+	# print(list(section_buffers))
 	if len(section_buffers) > 0:
 		for section in list(section_buffers):
 			if not re.search(r'name ?server',section,re.IGNORECASE):
@@ -302,9 +335,10 @@ def whois_from_text(text):
 
 
 			except Exception as e:
-				print(str(e))
-				print(buffers[PREV_SECTION])
-				print(PREV_SECTION)
+				pass
+				# print(str(e))
+				# print(buffers[PREV_SECTION])
+				# print(PREV_SECTION)
 
 		# Within a section, we are looking for the organization and the name
 		# If hint_from is triggered but returns blank, keep looking
